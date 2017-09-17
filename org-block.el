@@ -41,24 +41,41 @@ point-or-marker POM, or the current headline if unprovided."
 (add-hook 'org-after-todo-state-change-hook 'org-update-dependency-graph)
 
 ;;; TODO: do not allow headline to set itself as a dependency
-(defun org-add-dependency (dep-id)
-  "Add DEP-ID as a dependency to headline at the current point."
+(defun org-add-dependency-by-id (dep-id is-dependent)
+  "Add DEP-ID as a dependency or dependent (according to
+IS-DEPENDENT) of the headline at the current point."
   (let ((dep (org-id-find dep-id t)))
     (when dep
-      (org-entry-add-to-multivalued-property (point) org-block-depends-upon-property dep-id)
+      (org-entry-add-to-multivalued-property
+       (point)
+       (if is-dependent
+	   org-block-blocks-property
+	 org-block-depends-upon-property)
+       dep-id)
       (let ((current-id (org-id-get-create)))
-	(org-entry-add-to-multivalued-property dep org-block-blocks-property current-id))
-      (org-update-dependency-graph dep))))
+	(org-entry-add-to-multivalued-property
+	 dep
+	 (if is-dependent
+	     org-block-depends-upon-property
+	   org-block-blocks-property)
+	 current-id))
+      (org-update-dependency-graph
+       (if is-dependent
+	   (point)
+	 dep)))))
 
-(defun org-prompt-add-dependency ()
+(defun org-add-dependency (is-dependent)
   "Prompt for and add a headline as a dependency of the current
-headline."
+headline. With a prefix argument, add the selected headline as a
+dependent."
+  (interactive "P")
   (let ((pos (car (org-get-location (current-buffer) org-goto-help))))
     (when pos
-      (org-add-dependency
+      (org-add-dependency-by-id
        (save-excursion
 	 (goto-char pos)
-	 (org-id-get-create))))))
+	 (org-id-get-create))
+       is-dependent))))
 
 (defun org-all-dependencies-done-p (pom)
   "Test if all dependencies are done of entry at point-or-marker
