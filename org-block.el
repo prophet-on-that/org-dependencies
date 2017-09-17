@@ -101,3 +101,17 @@ POM."
   (save-excursion
     (goto-char pom)
     (org-get-todo-state)))
+
+(defun org-show-dependencies (show-dependents)
+  "Show direct dependencies of the current headline as a sparse
+tree in the current buffer. With the \\\[universal-argument]
+prefix, show the direct dependents, instead."
+  (interactive "P")
+  (let* ((id (org-id-get-create))
+	 (prop
+	  (if show-dependents
+	      org-block-depends-upon-property
+	    org-block-blocks-property))
+	 (match (concat prop "={" id "}"))
+	 (todo-only nil))
+    (org-scan-tags 'sparse-tree (cdr (org-make-tags-matcher match)) todo-only)))
