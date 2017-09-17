@@ -3,13 +3,13 @@
 (when (not (boundp 'org-goto-map))
   (org-goto-map))
 
-(defvar org-block-blocked-keyword "BLOCKED"
+(defvar org-blocked-keyword "BLOCKED"
   "Todo keyword representing a blocked state.")
-(defvar org-block-todo-keyword "TODO"
+(defvar org-todo-keyword "TODO"
   "Todo keyword representing an active state.")
-(defvar org-block-dependents-property "DEPENDENTS"
+(defvar org-dependents-property "DEPENDENTS"
   "Property name to store dependents of a headline.")
-(defvar org-block-dependencies-property "DEPENDENCIES"
+(defvar org-dependencies-property "DEPENDENCIES"
   "Property name to store dependencies of a headline.")
 
 (defun org-update-dependency-graph (&optional pom)
@@ -19,7 +19,7 @@ point-or-marker POM, or the current headline if unprovided."
     (let ((current-state (org-get-todo-state-at-pom pom)))
       (when (or (org-done-keyword-p current-state)
 		(org-not-done-keyword-p current-state))
-	(dolist (dep-id (org-entry-get-multivalued-property pom org-block-dependents-property))
+	(dolist (dep-id (org-entry-get-multivalued-property pom org-dependents-property))
 	  (let* ((marker (org-id-find dep-id t))
 		 (state (org-get-todo-state-at-pom marker)))
 	    (cond ((and (org-not-done-keyword-p current-state)
@@ -27,7 +27,7 @@ point-or-marker POM, or the current headline if unprovided."
 		   ;; Set entry as pending if not done
 		   (save-excursion
 		     (goto-char marker)
-		     (org-todo org-block-blocked-keyword)))
+		     (org-todo org-blocked-keyword)))
 		  
 		  ((and (org-done-keyword-p current-state)
 			(org-not-done-keyword-p state))
@@ -35,7 +35,7 @@ point-or-marker POM, or the current headline if unprovided."
 		   ;; are done
 		   (save-excursion
 		     (goto-char marker)
-		     (org-todo (if (org-all-dependencies-done-p marker) org-block-todo-keyword org-block-blocked-keyword)))))
+		     (org-todo (if (org-all-dependencies-done-p marker) org-todo-keyword org-blocked-keyword)))))
 	    (org-update-dependency-graph marker)))))))
 
 (add-hook 'org-after-todo-state-change-hook 'org-update-dependency-graph)
@@ -49,15 +49,15 @@ IS-DEPENDENT) of the headline at the current point."
       (org-entry-add-to-multivalued-property
        (point)
        (if is-dependent
-	   org-block-dependents-property
-	 org-block-dependencies-property)
+	   org-dependents-property
+	 org-dependencies-property)
        dep-id)
       (let ((current-id (org-id-get-create)))
 	(org-entry-add-to-multivalued-property
 	 dep
 	 (if is-dependent
-	     org-block-dependencies-property
-	   org-block-dependents-property)
+	     org-dependencies-property
+	   org-dependents-property)
 	 current-id))
       (org-update-dependency-graph
        (if is-dependent
@@ -86,7 +86,7 @@ POM."
 			(save-excursion
 			  (goto-char marker)
 			  (org-entry-is-done-p)))))
-    (cl-every #'entry-is-done (org-entry-get-multivalued-property pom org-block-dependencies-property))))
+    (cl-every #'entry-is-done (org-entry-get-multivalued-property pom org-dependencies-property))))
 
 (defun org-done-keyword-p (keyword)
   "Test if KEYWORD is a done keyword."
@@ -110,8 +110,8 @@ prefix, show the direct dependents, instead."
   (let* ((id (org-id-get-create))
 	 (prop
 	  (if show-dependents
-	      org-block-dependencies-property
-	    org-block-dependents-property))
+	      org-dependencies-property
+	    org-dependents-property))
 	 (match (concat prop "={" id "}"))
 	 (todo-only nil))
     (org-scan-tags 'sparse-tree (cdr (org-make-tags-matcher match)) todo-only)))
