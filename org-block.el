@@ -66,8 +66,8 @@ IS-DEPENDENT) of the headline at the current point."
 
 (defun org-add-dependency (is-dependent)
   "Prompt for and add a headline as a dependency of the current
-headline. With a prefix argument, add the selected headline as a
-dependent."
+headline. With the \\\[universal-argument] prefix, add the
+selected headline as a dependent."
   (interactive "P")
   (let ((pos (car (org-get-location (current-buffer) org-goto-help))))
     (when pos
